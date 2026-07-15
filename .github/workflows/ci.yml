@@ -1,0 +1,109 @@
+name: GitHub Actions Lab CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  # Job 1: Static Code Compilation Analysis (Linter)
+  lint-and-validate:
+    name: Code Linting & Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Syntax Compile Check
+        run: |
+          python -m py_compile app.py test_app.py test_integration.py
+
+  # Job 2: Runs unit tests (depends on Job 1)
+  run-unit-tests:
+    name: Unit Test Suite
+    runs-on: ubuntu-latest
+    needs: lint-and-validate # Sequential dependency
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Unit Tests
+        run: pytest test_app.py
+
+  # Job 3: Runs integration tests (depends on Job 1)
+  run-integration-tests:
+    name: Integration Test Suite
+    runs-on: ubuntu-latest
+    needs: lint-and-validate # Runs in parallel with run-unit-tests
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Integration Tests
+        run: pytest test_integration.py
+
+  # Job 4: Deploy application (depends on Job 2 and Job 3 passing)
+  deploy-staging:
+    name: Deploy to Staging Target
+    runs-on: ubuntu-latest
+    needs: [run-unit-tests, run-integration-tests] # Join dependency (wait for both)
+    steps:
+      - name: Deployment Execution Mock
+        run: |
+          echo "Connecting to target staging host..."
+          echo "Deploying application code..."
+          echo "Deployment successful!"
+
+  # Job 5: Notification trigger (runs ONLY if any of the preceding jobs fail)
+  notify-failure:
+    name: Send Failure Notification
+    runs-on: ubuntu-latest
+    needs: [lint-and-validate, run-unit-tests, run-integration-tests, deploy-staging]
+    if: failure() # Condition gate: Executed only if one or more dependencies failed
+    steps:
+      - name: Dispatch Notification
+        run: |
+          echo "CRITICAL WARNING: One or more pipeline stages failed!"
+          echo "Triggering alerts to DevOps Slack channels..."
+
+  # Job 6: Cleanup job (runs ALWAYS, even if there are failures or cancellations)
+  teardown-cleanup:
+    name: Post-Execution Resource Teardown
+    runs-on: ubuntu-latest
+    needs: [lint-and-validate, run-unit-tests, run-integration-tests, deploy-staging]
+    if: always() # Condition gate: Executed under all conditions (success, failure, cancel)
+    steps:
+      - name: Execute Cleanup
+        run: |
+          echo "Wiping temporary variables..."
+          echo "Terminating lab test network hooks..."
+          echo "Teardown complete."
