@@ -26,7 +26,7 @@ jobs:
 
       - name: Syntax Compile Check
         run: |
-          ./.github/Scripts/Check_python_syntx.sh   main
+          ./.github/workflows/Scripts/Check_python_syntx.sh   main
 
   # Job 2: Runs unit tests (depends on Job 1)
   run-unit-tests:
