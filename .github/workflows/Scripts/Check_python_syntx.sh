@@ -32,7 +32,7 @@ for file in $CHANGED_FILES; do
         
         # Run py_compile. If it returns a non-zero exit code, it failed.
         if ! python3 -m py_compile "$file"; then
-            echo "❌ Syntax error detected in $file"
+            echo " Syntax error detected in $file"
             FAILED=1
         fi
     fi
@@ -41,10 +41,10 @@ done
 # 4. Final pipeline exit status
 if [ $FAILED -ne 0 ]; then
     echo "----------------------------------------"
-    echo "❌ py_compile check failed. Please fix the syntax errors above."
+    echo " py_compile check failed. Please fix the syntax errors above."
     exit 1  # This tells the CI/CD pipeline to fail the PR build
 else
     echo "----------------------------------------"
-    echo "✅ All changed Python files compiled successfully!"
+    echo " All changed Python files compiled successfully!"
     exit 0
 fi
