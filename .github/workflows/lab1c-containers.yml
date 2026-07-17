@@ -1,0 +1,36 @@
+name: Lab 1C - Containerized Job Execution
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-on-host:
+    name: Run Directly on Runner Host OS
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inspect OS and Python version
+        run: |
+          echo "=== Host Info ==="
+          lsb_release -a || cat /etc/os-release
+          echo "=== Python on Host ==="
+          python3 --version
+          which python3
+
+  run-in-container:
+    name: Run Inside Docker Container
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.11-slim
+    steps:
+      - name: Inspect OS and Python version inside container
+        run: |
+          echo "=== Container Info ==="
+          cat /etc/os-release
+          echo "=== Python in Container ==="
+          python3 --version
+          which python3
+          
+      - name: Install temporary package
+        run: |
+          pip install requests
+          python -c "import requests; print('requests library loaded successfully!')"

@@ -1,0 +1,56 @@
+name: Lab 1A - Job and Step Boundaries
+
+on:
+  workflow_dispatch:
+
+jobs:
+  job-one:
+    name: Job One (VM Host 1)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Step 1 - Set Shell Variable & File
+        run: |
+          echo "Step 1: Setting local variable and creating temporary file..."
+          echo "SECRET_CODE=PwC-DevOps-2026" >> $GITHUB_ENV
+          echo "Vodafone-Egypt-Fixed-Networks" > system-data.txt
+          
+      - name: Step 2 - Verify Shell Variable & File inside same Job
+        run: |
+          echo "Step 2: Checking environment variable and file..."
+          echo "Retrieved Env Var: $SECRET_CODE"
+          echo "Retrieved File Content: $(cat system-data.txt)"
+          
+      - name: Step 3 - Upload File as Artifact (The bridge)
+        uses: actions/upload-artifact@v4
+        with:
+          name: shared-data
+          path: system-data.txt
+          retention-days: 1
+
+  job-two:
+    name: Job Two (VM Host 2 - Isolated)
+    runs-on: ubuntu-latest
+    needs: job-one
+    steps:
+      - name: Step 1 - Try to read Job 1 variable & file directly
+        run: |
+          echo "Step 1: Checking if Job 1 env var and file carried over directly..."
+          echo "Env Var (should be blank): '$SECRET_CODE'"
+          if [ -f system-data.txt ]; then
+            echo "File exists!"
+          else
+            echo "File does not exist on this VM! (Isolation confirmed)"
+          fi
+
+      - name: Step 2 - Download Artifact to retrieve file
+        uses: actions/download-artifact@v4
+        with:
+          name: shared-data
+
+      - name: Step 3 - Read downloaded file
+        run: |
+          echo "Step 3: Reading downloaded file..."
+          echo "Retrieved File Content: $(cat system-data.txt)"
